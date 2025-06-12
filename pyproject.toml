@@ -1,10 +1,13 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "versioningit"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "versioningit"
 
 [project]
 name = "ampyc"
-version = "0.0.1"
+dynamic = ["version"]
 dependencies = [
   "numpy",
   "cvxpy",
@@ -31,7 +34,10 @@ license = "MIT"
 license-files = ["LICEN[CS]E.*"]
 keywords = ["MPC", "Robust MPC", "Stochastic MPC", "Control Framework"]
 classifiers = [
-  "Programming Language :: Python"
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3 :: Only"
 ]
 
 [project.optional-dependencies]
@@ -39,6 +45,6 @@ cvxopt = ["cvxopt"]
 
 [project.urls]
 Homepage = "https://example.com"
-Documentation = "https://github.com/IntelligentControlSystems/ampyc/notes"
+Documentation = "https://github.com/IntelligentControlSystems/ampyc/tree/main/notes"
 Repository = "https://github.com/IntelligentControlSystems/ampyc"
 "Bug Tracker" = "https://github.com/IntelligentControlSystems/ampyc/issues"
