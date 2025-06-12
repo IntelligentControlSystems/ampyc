@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ampyc"
+version = "0.0.1"
+dependencies = [
+  "numpy",
+  "cvxpy",
+  "casadi",
+  "jupyter",
+  "matplotlib",
+  "pyqt6",
+  "polytope",
+  "ecos",
+]
+requires-python = ">=3.10"
+authors = [
+  {name = "Jerome Sieber", email = "jsieber@ethz.ch"},
+  {name = "Alexandre Didier", email = "adidier@ethz.ch"},
+  {name = "Rahel Rickenbach", email = "rrahel@ethz.ch"},
+  {name = "Mike Zhang"},
+]
+maintainers = [
+  {name = "Jerome Sieber", email = "jsieber@ethz.ch"}
+]
+description = "Python implementation of various advanced MPC algorithms"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICEN[CS]E.*"]
+keywords = ["MPC", "Robust MPC", "Stochastic MPC", "Control Framework"]
+classifiers = [
+  "Programming Language :: Python"
+]
+
+[project.optional-dependencies]
+cvxopt = ["cvxopt"]
+
+[project.urls]
+Homepage = "https://example.com"
+Documentation = "https://github.com/IntelligentControlSystems/ampyc/notes"
+Repository = "https://github.com/IntelligentControlSystems/ampyc"
+"Bug Tracker" = "https://github.com/IntelligentControlSystems/ampyc/issues"
