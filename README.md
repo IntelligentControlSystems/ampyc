@@ -1,5 +1,5 @@
 # AMPyC
-[GitHub](https://github.com/IntelligentControlSystems/ampyc) | [PyPI](https://pypi.org/project/ampyc/) | [Issues](https://github.com/IntelligentControlSystems/ampyc/issues) | [Changelog](https://github.com/IntelligentControlSystems/ampyc/CHANGELOG.md)
+[GitHub](https://github.com/IntelligentControlSystems/ampyc) | [PyPI](https://pypi.org/project/ampyc/) | [Issues](https://github.com/IntelligentControlSystems/ampyc/issues) | [Changelog](https://github.com/IntelligentControlSystems/ampyc/blob/main/CHANGELOG.md)
 
 ``ampyc`` -- *Advanced Model Predictive Control in Python*
 
@@ -45,14 +45,14 @@ For specific control algorithms implemented in ``ampyc``, run the associated not
 ## Implemented Control Algorithms
 | Year | Authors          | Method/Paper                                                                                                                                         | AMPyC                                                                                            |
 | :--- | :------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------- |
-| - | - | [Linear Model Predictive Control](https://sites.engineering.ucsb.edu/~jbraw/mpc/MPC-book-2nd-edition-1st-printing.pdf) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/controllers/mpc.py) |
-| - | - | [Nonlinear Model Predictive Control](https://sites.engineering.ucsb.edu/~jbraw/mpc/MPC-book-2nd-edition-1st-printing.pdf) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/controllers/nonlinear_mpc.py) |
-| 2001 | Chisci et al. | [Systems with persistent disturbances: predictive control with restricted constraints](https://www.sciencedirect.com/science/article/abs/pii/S0005109801000516) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/controllers/constraint_tightening_rmpc.py) |
-| 2005 | Mayne et al. | [Robust model predictive control of constrained linear systems with bounded disturbances](https://www.sciencedirect.com/science/article/abs/pii/S0005109804002870) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/controllers/robust_mpc.py) |
-| 2013 | Bayer et al. | [Discrete-time incremental ISS: A framework for robust NMPC](https://ieeexplore.ieee.org/document/6669322) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/controllers/nonlinear_robust_mpc.py) |
-| 2017 | Lorenzen et al. | [Constraint-Tightening and Stability in Stochastic Model Predictive Control](https://arxiv.org/pdf/1511.03488) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/controllers/constraint_tightening_smpc.py) |
-| 2018 | Hewing \& Zeilinger | [Stochastic Model Predictive Control for Linear Systems Using Probabilistic Reachable Sets](https://arxiv.org/pdf/1805.07145) | [code](https://github.com/IntelligentControlSystems/blob/main/ampyc/controllers/if_smpc.py) |
-| 2020 | Hewing et al. | [Recursively feasible stochastic model predictive control using indirect feedback](https://arxiv.org/pdf/1812.06860) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/controllers/ri_smpc.py) |
+| - | - | [Linear Model Predictive Control](https://sites.engineering.ucsb.edu/~jbraw/mpc/MPC-book-2nd-edition-1st-printing.pdf) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/ampyc/controllers/mpc.py) |
+| - | - | [Nonlinear Model Predictive Control](https://sites.engineering.ucsb.edu/~jbraw/mpc/MPC-book-2nd-edition-1st-printing.pdf) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/ampyc/controllers/nonlinear_mpc.py) |
+| 2001 | Chisci et al. | [Systems with persistent disturbances: predictive control with restricted constraints](https://www.sciencedirect.com/science/article/abs/pii/S0005109801000516) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/ampyc/controllers/constraint_tightening_rmpc.py) |
+| 2005 | Mayne et al. | [Robust model predictive control of constrained linear systems with bounded disturbances](https://www.sciencedirect.com/science/article/abs/pii/S0005109804002870) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/ampyc/controllers/robust_mpc.py) |
+| 2013 | Bayer et al. | [Discrete-time incremental ISS: A framework for robust NMPC](https://ieeexplore.ieee.org/document/6669322) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/ampyc/controllers/nonlinear_robust_mpc.py) |
+| 2017 | Lorenzen et al. | [Constraint-Tightening and Stability in Stochastic Model Predictive Control](https://arxiv.org/pdf/1511.03488) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/ampyc/controllers/constraint_tightening_smpc.py) |
+| 2018 | Hewing \& Zeilinger | [Stochastic Model Predictive Control for Linear Systems Using Probabilistic Reachable Sets](https://arxiv.org/pdf/1805.07145) | [code](https://github.com/IntelligentControlSystems/blob/main/ampyc/ampyc/controllers/if_smpc.py) |
+| 2020 | Hewing et al. | [Recursively feasible stochastic model predictive control using indirect feedback](https://arxiv.org/pdf/1812.06860) | [code](https://github.com/IntelligentControlSystems/ampyc/blob/main/ampyc/controllers/ri_smpc.py) |
 
 ## Cite this Package \& Developers
 If you find this package/repository helpful, please cite our work:
