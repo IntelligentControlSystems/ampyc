@@ -39,14 +39,14 @@ class ConstraintTighteningRMPC(ControllerBase):
         W = sys.W
 
         # compute the terminal cost P and controller K using LQR
-        self.P, self.K = LQR(A, B, Q, R)
+        self.K, self.P = LQR(A, B, Q, R)
 
         # compute the disturbance reachable sets
         self.F = compute_drs(A + B @ self.K, W, N)
 
         # compute the MRPI terminal set
         Omega = Polytope(A=np.vstack([X.A, U.A @ self.K]), b=np.hstack([X.b, U.b]).reshape(-1, 1))
-        self.X_f = compute_mrpi(A + B @ self.K, Omega, W)
+        self.X_f = compute_mrpi(Omega, A + B @ self.K, W)
 
         # define the optimization variables
         self.z = cp.Variable((n, N+1))
