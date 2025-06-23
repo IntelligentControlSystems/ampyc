@@ -27,12 +27,61 @@ def LQR(A: np.ndarray, B: np.ndarray, Q: np.ndarray, R:np.ndarray) -> tuple[np.n
         R (np.ndarray): Input cost matrix.
 
     Returns:
-        P (np.ndarray): The solution to the DARE.
         K (np.ndarray): The LQR controller gain.
+        P (np.ndarray): The quadratic value function solution to the DARE.
     '''
     P = solve_discrete_are(A, B, Q, R)
     K = -np.linalg.inv(R + B.T @ P @ B) @ B.T @ P @ A
-    return P, K
+    return K, P
+
+def min_tightening_controller(sys: System, rho: float = 1.0, lambd: float = 0.88, solver: str | None = None) -> tuple[np.ndarray, np.ndarray]:
+    '''
+    Computes a controller K that minimizes the state and input tightening
+
+    The method is from
+    Limon et al., "Robust tube-based MPC for tracking of constrained linear
+    systems with additive disturbances", Journal of Process Control, 2010.
+
+    Args:
+        sys (System): The system for which the controller is computed.
+        rho (float): The contraction factor for the tube.
+        lambd (float): The tightening factor for the input constraints.
+        solver (str | None): The solver to use for the optimization problem (default: None).
+    
+    Returns:
+        K (np.ndarray): The controller gain matrix.
+        P (np.ndarray): The associated quadratic value function matrix.
+    '''
+
+    E = cp.Variable((sys.n, sys.n),symmetric=True)
+    Y = cp.Variable((sys.m, sys.n))
+    gamma = cp.Variable((1,1))
+    lambda_ = np.ones((1,1))*lambd
+    rho_ = np.ones((2,1))*rho
+
+    constraints = []
+    for w in sys.W.V:
+        constraints.append(cp.bmat([[lambda_*E, np.zeros((2,1)), E.T@sys.A.T + Y.T@sys.B.T],
+                                    [np.zeros((1,2)), 1 - lambda_, w[np.newaxis]],
+                                    [sys.A@E + sys.B@Y, w[np.newaxis].T, E]]) >> 0)
+        
+    for hi in np.divide(sys.X.A, sys.X.b.reshape(-1,1)):
+        constraints.append(cp.bmat([[gamma, hi[np.newaxis]@E.T],
+                                    [E@hi[np.newaxis].T, E]]) >> 0)
+        
+    for i,hi in enumerate(np.divide(sys.U.A, sys.U.b.reshape(-1,1))):
+        constraints.append(cp.bmat([[cp.power(cp.reshape(rho_[i], (1,1),'C'),2), hi[np.newaxis]@Y],
+                                    [Y.T@hi[np.newaxis].T, E]]) >> 0)
+
+    obj = cp.Minimize(gamma)
+    prob = cp.Problem(obj, constraints)
+
+    prob.solve(solver=solver, verbose=False)
+
+    K = Y.value@np.linalg.inv(E.value)
+    P = np.linalg.inv(E.value)
+
+    return K, P
 
 def _compute_tube_controller(sys: System, Q: np.ndarray, R: np.ndarray, rho: float, lam: float) -> tuple[np.ndarray, np.ndarray]:
     '''
