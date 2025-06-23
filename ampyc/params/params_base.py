@@ -46,7 +46,6 @@ class ParamsBase():
         Parameters:
             n (int): Number of states.
             m (int): Number of inputs.
-            dt (float): Time step for discrete-time systems.
             A (np.ndarray | None): State transition matrix for linear systems.
             B (np.ndarray | None): Input matrix for linear systems.
             C (np.ndarray | None): Output matrix for linear systems.
@@ -67,7 +66,6 @@ class ParamsBase():
         # system dimensions
         n: int
         m: int
-        dt: float
         
         # linear dynamics
         A: np.ndarray | None

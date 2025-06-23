@@ -60,8 +60,6 @@ class SystemBase(ABC):
         Args:
             params: The new system parameters derived from a ParamsBase dataclass.
         '''
-        # time step
-        self.dt = params.dt
 
         # system dimensions
         self.n = params.n
