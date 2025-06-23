@@ -32,40 +32,51 @@ class Polytope(pc.Polytope):
     '''
 
     def __init__(self, A: np.ndarray | None = None, b: np.ndarray | None = None, vertices: np.ndarray | None = None, **kwargs) -> polytope:
+        # handle arguments
+        self.is_lazy = kwargs.pop("lazy", False) # if True, do not compute vertices, half-spaces, and bounding box until needed
         
         if A is None and b is None and vertices is None: # empty polytope
             super().__init__(A=np.array([]), b=np.array([]), vertices=np.array([]), normalize=False, **kwargs)
         else: # non-empty polytope
-            # compute H representation if not provided
-            if A is None and b is None:
-                # compute H-representation from vertices
-                out = qhull(vertices, output="raw")
 
-                if len(out) == 3:
-                    A, b, _ = out
-                else:
-                    A, b = (np.array([]), np.array([]))
-                    if "verbose" in kwargs and kwargs["verbose"]:
-                        print("[Warning] Could not compute H-representation from vertices; creating polytope only in V-representation!")
-            
-            super().__init__(A=A, b=b, vertices=vertices, normalize=False, **kwargs)
-            
-            # always compute V representation (comment out for better performance)
-            if self.vertices is None and self.dim > 0:
-                self.vertices = extreme(self)
+            if self.is_lazy:
+                # if lazy, we use the information (A, b, vertices) as provided and do not compute anything
+                super().__init__(A=A, b=b, vertices=vertices, normalize=False, **kwargs)
 
-            # alias for vertices
-            self.V = self.vertices
+                # alias for vertices
+                self.V = self.vertices
 
-            # get bounding box
-            if self.dim > 0:
-                self.bounding_box
+            else:
+                # compute H representation if not provided
+                if A is None and b is None:
+                    # compute H-representation from vertices
+                    out = qhull(vertices, output="raw")
 
-            if self.bbox is not None:
-                box = np.array(self.bbox)
-                self.xlim = [box[0,0].item()*1.1, box[1,0].item()*1.1]
-                if self.dim > 1:
-                    self.ylim = [box[0,1].item()*1.1, box[1,1].item()*1.1]
+                    if len(out) == 3:
+                        A, b, _ = out
+                    else:
+                        A, b = (np.array([]), np.array([]))
+                        if "verbose" in kwargs and kwargs["verbose"]:
+                            print("[Warning] Could not compute H-representation from vertices; creating polytope only in V-representation!")
+                
+                super().__init__(A=A, b=b, vertices=vertices, normalize=False, **kwargs)
+                
+                # always compute V representation (comment out for better performance)
+                if self.vertices is None and self.dim > 0:
+                    self.vertices = extreme(self)
+
+                # alias for vertices
+                self.V = self.vertices
+
+                # get bounding box
+                if self.dim > 0:
+                    self.bounding_box
+
+                if self.bbox is not None:
+                    box = np.array(self.bbox)
+                    self.xlim = [box[0,0].item()*1.1, box[1,0].item()*1.1]
+                    if self.dim > 1:
+                        self.ylim = [box[0,1].item()*1.1, box[1,1].item()*1.1]
 
     __array_ufunc__ = None  # disable numpy ufuncs
 
@@ -156,6 +167,13 @@ class Polytope(pc.Polytope):
                 self.vertices = extreme(self)
             return _matrix_propagate_polytope(other, self)
     
+    @property
+    def is_empty(self) -> bool:
+        """
+        Check if the Polytope is empty.
+        """
+        return not is_fulldim(self)
+    
     def grid(self, N: int = 10) -> np.ndarray:
         """
         Create a grid of points within the bounding box of the Polytope.
@@ -171,12 +189,21 @@ class Polytope(pc.Polytope):
         YY = np.linspace(bbox[1,0],bbox[1,1], int(np.floor(np.sqrt(N))))
         return np.stack(np.meshgrid(XX, YY),axis=2)
         
-    def intersect(self, other: polytope) -> polytope:
+    def intersect(self, other: polytope, lazy: bool = True) -> polytope:
         """
         Compute the intersection of this Polytope with another Polytope.
+
+        Args:
+            lazy (bool): If True, return a lazy Polytope that does not compute vertices, half-spaces, and
+                         bounding box until needed. This is recommended for performance reasons.
         """
         P = super().intersect(other)
-        return Polytope(A=P.A, b=P.b, vertices=P.vertices)
+        if lazy:
+            # return a lazy Polytope
+            return Polytope(A=P.A, b=P.b, lazy=True)
+        else:
+            # return a full Polytope with vertices and bounding box computed
+            return Polytope(A=P.A, b=P.b, vertices=P.vertices)
     
     def plot(self, ax: plt.Axes | None = None, alpha: float = 0.25, color: str | None = None, **kwargs) -> plt.Axes:
         """
