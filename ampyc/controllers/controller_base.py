@@ -49,6 +49,7 @@ class ControllerBase(ABC):
         self.sys = sys
         self.params = params
         self.solver = kwargs.pop('solver', None)
+        self.timing = kwargs.pop('timing', False)
         self._init_problem(sys, params, *args, **kwargs)
         self.output_mapping = self._define_output_mapping()
     
@@ -140,6 +141,9 @@ class ControllerBase(ABC):
             
             out_map = self.output_mapping.copy()
 
+            # reshape x to match the expected shape of the initial condition
+            x = x.reshape(self.x_0.shape)
+
             if isinstance(self.prob,cp.Problem):
                 try:
                     self.x_0.value = x
@@ -155,12 +159,16 @@ class ControllerBase(ABC):
                         error_msg = None
                         for mapping in self.output_mapping:
                             out_map[mapping] = self.output_mapping[mapping].value
+                            if self.timing:
+                                out_map["timing"] = self.prob.solver_stats.solve_time
                     control = out_map['control']
                     state = out_map['state']
                 except Exception as e:
                     error_msg = 'Solver encountered an error. {0}'.format(e)
                     for mapping in self.output_mapping:
                             out_map[mapping] = None
+                            if self.timing:
+                                out_map["timing"] = None
                     control = out_map['control']
                     state = out_map['state']
 
@@ -188,10 +196,14 @@ class ControllerBase(ABC):
                         error_msg = None
                         for mapping in self.output_mapping:
                             out_map[mapping] = sol.value(self.output_mapping[mapping])
+                            if self.timing:
+                                out_map["timing"] = sum([v for k, v in sol.stats().items() if 't_wall' in k])
                     else:
                         error_msg = 'Solver was not successful with return status: {0}'.format(sol.stats()['return_status'])
                         for mapping in self.output_mapping:
                             out_map[mapping] = None
+                            if self.timing:
+                                out_map["timing"] = None
                             
                     control = out_map['control']
                     state = out_map['state']
