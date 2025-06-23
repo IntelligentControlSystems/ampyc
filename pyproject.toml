@@ -10,6 +10,7 @@ name = "ampyc"
 dynamic = ["version"]
 dependencies = [
   "numpy",
+  "scipy",
   "cvxpy",
   "casadi",
   "jupyter",
@@ -17,6 +18,7 @@ dependencies = [
   "pyqt6",
   "polytope",
   "ecos",
+  "tqdm",
 ]
 requires-python = ">=3.10"
 authors = [
