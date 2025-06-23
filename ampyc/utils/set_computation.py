@@ -9,12 +9,29 @@
 
 import numpy as np
 import cvxpy as cp
-from numpy.linalg import matrix_power
+from tqdm import tqdm
+from numpy.linalg import matrix_power, eigvals
 from scipy.stats.distributions import chi2
 from scipy.linalg import sqrtm
 
 from ampyc.typing import System, Controller
-from ampyc.utils import Polytope, qhull, _reduce
+from ampyc.utils import Polytope, qhull
+
+
+def _pre_set(Omega: Polytope, A: np.ndarray) -> Polytope:
+    '''
+    Compute the pre-set of the polytopic set Omega under the linear
+    autonomous dynamics A.
+
+    Args:
+        Omega (Polytope): The polytopic set for which the pre-set is computed.
+        A (np.ndarray): The state transition matrix of the autonomous linear system.
+
+    Returns:
+        Polytope: The pre-set of Omega under the dynamics A.
+    '''
+
+    return Polytope(A=Omega.A @ A, b=Omega.b, lazy=True)
 
 def _robust_pre_set(Omega: Polytope, A: np.ndarray, W: Polytope) -> Polytope:
     '''
@@ -33,17 +50,53 @@ def _robust_pre_set(Omega: Polytope, A: np.ndarray, W: Polytope) -> Polytope:
     for i in range(Omega.b.shape[0]):
         b_pre[i] -= W.support(Omega.A[i,:])
 
-    return Polytope(A=Omega.A @ A, b=b_pre)
+    return Polytope(A=Omega.A @ A, b=b_pre, lazy=True)
 
+def compute_mpi(Omega: Polytope, A: np.ndarray, max_iter: int = 50) -> Polytope:
+    '''
+    Compute the maximal positive invariant (MPI) set of the polytopic set Omega
+    under the linear autonomous dynamics A.
 
-def compute_mrpi(A: np.ndarray, Omega: Polytope, W: Polytope, max_iter: int = 50) -> Polytope:
+    Args:
+        Omega (Polytope): The constraint set for which the MPI is computed.
+        A (np.ndarray): The state transition matrix of the autonomous linear system.
+        max_iter (int): Maximum number of iterations for convergence.
+    
+    Returns:
+        Polytope: The maximal positive invariant (MPI) set.
+    '''
+    iters = 0
+    mpi = Polytope(A=Omega.A, b=Omega.b, lazy=True)
+
+    while iters < max_iter:
+        iters += 1
+        mpi_pre = _pre_set(mpi, A)
+        mpi_next = mpi.intersect(mpi_pre)
+
+        if mpi_next.is_empty:
+            print('MPI computation converged to an empty set after {0} iterations.'.format(iters))
+            return Polytope()
+
+        if mpi == mpi_next:
+            print('MPI computation converged after {0} iterations.'.format(iters))
+            break
+
+        if iters == max_iter:
+            print('MPI computation did not converge after {0} max iterations.'.format(iters))
+            break
+
+        mpi = mpi_next
+
+    return mpi
+
+def compute_mrpi(Omega: Polytope, A: np.ndarray, W: Polytope, max_iter: int = 50) -> Polytope:
     '''
     Compute the maximal robust positive invariant (MRPI) set of the polytopic set Omega
     under the linear autonomous dynamics A and polytopic disturbance set W.
 
     Args:
-        A (np.ndarray): The state transition matrix of the autonomous linear system.
         Omega (Polytope): The constraint set for which the MRPI is computed.
+        A (np.ndarray): The state transition matrix of the autonomous linear system.
         W (Polytope): The polytopic disturbance set.
         max_iter (int): Maximum number of iterations for convergence.
     
@@ -51,12 +104,16 @@ def compute_mrpi(A: np.ndarray, Omega: Polytope, W: Polytope, max_iter: int = 50
         Polytope: The maximal robust positive invariant (MRPI) set.
     '''
     iters = 0
-    mrpi = Polytope(A=Omega.A, b=Omega.b)
+    mrpi = Polytope(A=Omega.A, b=Omega.b, lazy=True)
 
     while iters < max_iter:
         iters += 1
         mrpi_pre = _robust_pre_set(mrpi, A, W)
-        mrpi_next = mrpi.intersect(mrpi_pre)
+        mrpi_next = mrpi_pre.intersect(mrpi)
+
+        if mrpi_next.is_empty:
+            print('MRPI computation converged to an empty set after {0} iterations.'.format(iters))
+            return Polytope()
 
         if mrpi == mrpi_next:
             print('MRPI computation converged after {0} iterations.'.format(iters))
@@ -68,7 +125,181 @@ def compute_mrpi(A: np.ndarray, Omega: Polytope, W: Polytope, max_iter: int = 50
 
         mrpi = mrpi_next
 
-    return _reduce(mrpi)
+    return mrpi
+
+def eps_min_RPI(sys: System, K: np.ndarray, epsilon: float = 1e-6, s_max: int = 50, method: str = 'RPI') -> tuple[Polytope, dict]:
+    """ 
+    Computes the minimal robust positively invariant (RPI) set for a linear system.
+
+    Depending on the method parameter, this method either computes an outer
+    epsilon-approximation of the min. RPI set or uses a heuristic to approximate the
+    min. RPI set.
+
+    - method = 'RPI' implements Algorithm 1 in [1] to determine a RPI outer 
+        approximation.
+    - method = 'heuristic' implements a heuristic that computes the min. RPI set up
+        to a maximal iteration of the Minkowski sum.
+
+    Args:
+        sys: A numpy array (the state transition matrix (must be strictly stable)
+        K: The controller gain matrix.
+        epsilon: Approximation error bound.
+        s_max: Maximum number of iterations, at which the algorithm terminates.
+        method (str): Which method to use for computing the minimal RPI set.
+            - 'RPI': Returns a true RPI set. Choose this option for better accuracy,
+                but it may take longer to compute.
+            - 'heuristic': Returns not necessarily an RPI set. Choose this option
+                for faster computation, but the result may not be a true RPI set.
+
+    Returns:
+        F_eps: The epsilon approximation of the min. RPI set.
+        info: Additional information about the computation, including:
+            - status: 0 if the algorithm converged, otherwise -1.
+            - s (int): The number of iterations performed.
+            - eps_min (float): The minimal approximatino error epsilon achieved
+                by the computed RPI set.
+            - alpha (float; only method = 'RPI'): scaling variable in Eq. (4) of [1],
+                :math: A^s W \subset alpha W
+
+    Raises:
+        ValueError: An argument did not satisfy a necessary condition or the support
+            function could not be evaluated successfully.
+        Warning: If the maximum number of iterations is reached without convergence.
+
+    Paper reference:
+        [1] S. V. Raković, E. C. Kerrigan, K. I. Kouramas, D. Q. Mayne, "Invariant
+            approximations of the minimal robust positively invariant set. IEEE
+            Transactions on Automatic Control (2005).
+    """
+
+    status = -1  # set to 0 at successful termination
+
+    # build closed-loop dynamics
+    A = sys.A + sys.B @ K
+
+    # check if A is strictly stable
+    m, n = A.shape
+    if m != n:
+        raise ValueError('Closed-loop A must be a square matrix')
+    if not np.all(eigvals(A) < 1):
+        raise ValueError('Closed-loop A must be strictly stable: all eigenvalues must be < 1')
+
+    # get disturbance polytope W
+    H_w, h_w = (sys.W.A, sys.W.b)
+    n_w = h_w.size
+    # check if W is compact and contains the origin
+    if not all(h_w > 0):
+        raise ValueError('W does not contain the origin: g > 0 is not satisfied')
+    
+    if method in ['RPI', 'rpi']:
+        """
+        Implements Algorithm 1 in [1]. The comments below refer to the steps in the algorithm
+        and the equations in the paper.
+        """
+        # create storage arrays
+        alpha_o = np.full(s_max, np.nan)
+        M_row = np.zeros((s_max, 2 * n)) # store positive and negative support values
+        M = np.full(s_max, np.nan)
+
+        # Pre-compute all matrix powers of A, A^s, s = 0, ..., s_max
+        A_pwr = np.stack([matrix_power(A, i) for i in range(s_max)])
+
+        # Step 1: Choose any s in the natural numbers (ideally, set s = 0).
+        s = 0
+
+        # Step 2: repeat
+        while s < s_max - 1:
+            # Step 3: Increment s by one.
+            s += 1
+
+            # Step 4: Compute alpha^o(s) as in (11).
+            alpha_o_row = np.full(n_w, np.nan)
+            for i,hi in enumerate(H_w):
+                support = sys.W.support(A_pwr[s].T @ hi.reshape(-1, 1))
+                alpha_o_row[i] = support / h_w[i]
+            alpha_o[s] = np.max(alpha_o_row)
+
+            # set alpha to alpha^o(s)
+            alpha = alpha_o[s]
+
+            # Look up s-th power of A
+            A_pwr_s = A_pwr[s - 1]
+
+            # Step 5: Compute M(s) as in (13).
+            support_pos = np.full(n, np.nan)
+            support_neg = np.full(n, np.nan)
+            for i in range(n):
+                support_pos[i] = sys.W.support(A_pwr_s[i])
+                support_neg[i] = sys.W.support(-A_pwr_s[i])
+            
+            # Store all 2n support-function evaluations for iteration s and sum
+            # form 0 to s - 1
+            M_row[s] = M_row[s - 1] + np.concatenate((support_pos, support_neg))
+            M[s] = np.max(M_row[s]) # take maximum of the support values
+
+            # Step 6: break if alpha <= epsilon / (epsilon + M(s))
+            if alpha <= epsilon / (epsilon + M[s]):
+                status = 0  # success
+                break
+
+            s_final = s
+
+        # Step 7: Compute F_eps as the Minkowski sum (2) and scale it to give
+        # F(alpha, s) = (1 - alpha)^(-1) F_s.
+        F_eps = sys.W
+        for i in range(1, s_final + 1):
+            F_eps += A_pwr[i] @ sys.W
+        F_eps *= (1 / (1 - alpha)) # scale to obtain the epsilon-approximation
+
+        # obtain the smallest approximation error epsilon for s_final terms in
+        # the Minkowski sum.
+        eps_min = M[s_final] * alpha / (1 - alpha)
+
+        if status == -1:
+            print(f"Warning: Maximum number of iterations {s_max} reached without convergence.")
+
+        info = {'status': status, 's': s_final+1, 'eps_min': eps_min, 'alpha': alpha}
+
+        return F_eps, info
+    
+    elif method in ['heuristic']:
+        """
+        This heuristic computes the minimal RPI set iteratively applying the
+        closed-loop dynamics to the disturbance polytope W and summing the results
+        until the vertices of a new summand are below a given threshold.
+        """
+        # initialize the Minkowski sum with the disturbance polytope W
+        s = 1
+        F_eps = sys.W
+
+        # iterate until convergence or the maximum number of iterations is reached
+        while s < s_max:
+            # compute the matrix power of (A + B @ K)
+            A_pow = matrix_power(sys.A + sys.B @ K, s)
+
+            # compute the resulting transformation of the noise polytope W
+            A_pow_W = A_pow @ sys.W
+
+            # add the transformed polytope to the Minkowski sum
+            F_eps += A_pow_W
+
+            # check if the vertices of the transformed polytope are below a given threshold
+            # if the set A^i @ W is small enough, we can assume the sequence has converged
+            if np.all(np.abs(A_pow_W.V) < epsilon):
+                status = 0
+                break
+
+            s += 1
+        
+        if status == -1:
+            print(f"Warning: Maximum number of iterations {s_max} reached without convergence.")
+
+        info = {'status': status, 's': s, 'eps_min': np.abs(A_pow_W.V).max()}
+
+        return F_eps, info
+    
+    else:
+        raise ValueError(f"Unknown method '{method}' for computing the minimal RPI set.")
 
 def compute_drs(A_BK:np.array, W:Polytope, N:int) -> list[Polytope]:
     '''
@@ -204,12 +435,13 @@ def compute_RoA(ctrl: Controller, sys: System, grid_size: int = 25, return_type:
     RoA = np.zeros(grid.shape[:2])
 
     # check grid for feasibility
-    for i in range(grid.shape[0]):
+    for i in tqdm(range(grid.shape[0])):
         for j in range(grid.shape[1]):
             x_0 = grid[i,j,:]
             
             # solve
-            _, _, error_msg = ctrl.solve(x_0, additional_parameters=additional_params, verbose=False, solver=solver)
+            sol = ctrl.solve(x_0, additional_parameters=additional_params, verbose=False, solver=solver)
+            error_msg = sol[-1]
             if error_msg is None:
                 RoA[i,j] = 1
 

@@ -8,6 +8,6 @@
 '''
 
 from .helpers import suppress_stdout
-from .math import LQR, _compute_tube_controller
+from .math import LQR, min_tightening_controller, _compute_tube_controller
 from .polytope.polytope import Polytope, qhull, _reduce
-from .set_computation import compute_mrpi, compute_drs, compute_prs, compute_RoA
+from .set_computation import compute_mrpi, compute_drs, compute_prs, compute_RoA, eps_min_RPI
