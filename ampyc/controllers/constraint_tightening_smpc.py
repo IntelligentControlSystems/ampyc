@@ -17,8 +17,8 @@ class ConstraintTighteningSMPC(ControllerBase):
     '''
     Implements the stochastic constraint tightening MPC controller proposed in:
 
-    M. Lorenzen, G. Dabbene, R. Tempo, and F. Allgöwer, "Constraint-Tightening and Stability in
-    Stochastic Model Predictive Control", Transactions on Automatic Control (TAC), 2017.
+    B. Kouvaritakis and M. Cannon, "Model Predictive Control: Classical, Robust,
+    and Stochastic", Springer Nature, 2016.
 
     More information is provided in Chapter 6 of the accompanying notes:
     https://github.com/IntelligentControlSystems/ampyc/notes/06_stochasticMPC1.pdf
