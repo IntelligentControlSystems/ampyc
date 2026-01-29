@@ -29,6 +29,7 @@ authors = [
 ]
 maintainers = [
   {name = "Jerome Sieber", email = "jsieber@ethz.ch"}
+  {name = "Alexandre Didier", email= "adidier@ethz.ch"}
 ]
 description = "Python implementation of various advanced MPC algorithms"
 readme = "README.md"
