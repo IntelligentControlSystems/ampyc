@@ -1,3 +1,9 @@
+v0.0.3 (2026-01-29)
+---------------------
+- Added invariance-based safety filter (IBSF) and predictive safety filter (PSF) notes and notebook.
+- Fixed mutable defaults.
+
+
 v0.0.2 (2025-06-23)
 ---------------------
 - Added additional set computations, i.e., maximal positively invariant (PI) sets and minimal positively robust invariant (RPI) sets.
