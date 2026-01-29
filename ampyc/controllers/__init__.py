@@ -1,13 +1,8 @@
 '''
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Copyright (C) 2023, Alexandre Didier, Jérôme Sieber, Rahel Rickenbach and Shao (Mike) Zhang, ETH Zurich,
-% {adidier,jsieber, rrahel}@ethz.ch
+% Copyright (C) 2025, Intelligent Control Systems Group, ETH Zurich
 %
-% All rights reserved.
-%
-% This code is only made available for students taking the advanced MPC 
-% class in the fall semester of 2023 (151-0371-00L) and is NOT to be 
-% distributed.
+% This code is made available under an MIT License (see LICENSE file).
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 '''
@@ -29,3 +24,5 @@ from .constraint_tightening_rmpc import ConstraintTighteningRMPC
 
 from .constraint_tightening_smpc import ConstraintTighteningSMPC
 
+from .ibsf import IBSF, MinIBSF, DampIBSF
+from .psf import PSF
