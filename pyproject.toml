@@ -50,3 +50,6 @@ Homepage = "https://example.com"
 Documentation = "https://github.com/IntelligentControlSystems/ampyc/tree/main/notes"
 Repository = "https://github.com/IntelligentControlSystems/ampyc"
 "Bug Tracker" = "https://github.com/IntelligentControlSystems/ampyc/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

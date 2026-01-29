@@ -8,7 +8,7 @@
 '''
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import numpy as np
 
 from ampyc.typing import Noise
@@ -26,8 +26,8 @@ class RMPCSMPCParams(ParamsBase):
     class ctrl:
         name: str = 'robust/stochastic constraint tightening MPC'
         N: int = 6
-        Q: np.ndarray = 1 * np.eye(2)
-        R: np.ndarray = 1000 * np.eye(1)
+        Q: np.ndarray = field(default_factory=lambda: 1 * np.eye(2))
+        R: np.ndarray = field(default_factory=lambda: 1000 * np.eye(1))
 
     @dataclass
     class sys:
@@ -41,41 +41,41 @@ class RMPCSMPCParams(ParamsBase):
         g: float = 9.81
         l: float = 1.3
         c: float = 0.5
-        A: np.ndarray = np.array(
-            [
-                [1, dt],
-                [dt*(-k + (g/l)), 1 - dt*c]
-            ])
-        B: np.ndarray = np.array([0, dt]).reshape(-1,1)
-        C: np.ndarray = np.eye(n)
-        D: np.ndarray = np.zeros((n,m))
+        A: np.ndarray = field(init=False)
+        B: np.ndarray = field(init=False)
+        C: np.ndarray = field(init=False)
+        D: np.ndarray = field(init=False)
 
         # state constraints
-        A_x: np.ndarray | None = np.array(
+        A_x: np.ndarray | None = field(default_factory=lambda: np.array(
             [
                 [1, 0], 
                 [-1, 0],
                 [0, 1],
                 [0, -1]
-            ])
-        b_x: np.ndarray | None = np.array([np.deg2rad(25), np.deg2rad(25), np.deg2rad(25), np.deg2rad(25)]).reshape(-1,1)
+            ]))
+        b_x: np.ndarray | None = field(default_factory=lambda: np.array(
+            [np.deg2rad(25), np.deg2rad(25), np.deg2rad(25), np.deg2rad(25)]).reshape(-1, 1))
 
         # input constraints
-        A_u: np.ndarray | None = np.array([1, -1]).reshape(-1,1)
-        b_u: np.ndarray | None = np.array([4, 4]).reshape(-1,1)
+        A_u: np.ndarray | None = field(
+            default_factory=lambda: np.array([1, -1]).reshape(-1, 1))
+        b_u: np.ndarray | None = field(
+            default_factory=lambda: np.array([4, 4]).reshape(-1, 1))
 
         # noise description
-        A_w: np.ndarray | None = np.array(
+        A_w: np.ndarray | None = field(default_factory=lambda: np.array(
             [
                 [1, 0], 
                 [-1, 0],
                 [0, 1],
                 [0, -1]
-            ])
-        b_w: np.ndarray | None = np.array([np.deg2rad(2), np.deg2rad(2), np.deg2rad(2.2), np.deg2rad(2.2)]).reshape(-1,1)
+            ]))
+        b_w: np.ndarray | None = field(default_factory=lambda: np.array(
+            [np.deg2rad(2), np.deg2rad(2), np.deg2rad(2.2), np.deg2rad(2.2)]).reshape(-1, 1))
 
         # noise generator
-        noise_generator: Noise = PolytopeNoise(Polytope(A_w, b_w))
+        noise_generator: Noise = field(init=False)
 
         def __post_init__(self) -> None:
             '''
@@ -99,7 +99,8 @@ class RMPCSMPCParams(ParamsBase):
     class sim:
         num_steps: int = 30
         num_traj: int = 50
-        x_0: np.ndarray = np.array([np.deg2rad(20), np.deg2rad(-5)]).reshape(-1,1)
+        x_0: np.ndarray = field(default_factory=lambda: np.array(
+            [np.deg2rad(20), np.deg2rad(-5)]).reshape(-1, 1))
 
     @dataclass
     class plot:
