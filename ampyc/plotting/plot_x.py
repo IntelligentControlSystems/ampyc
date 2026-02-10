@@ -9,9 +9,20 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 from ampyc.typing import Params
 from ampyc.utils import Polytope
+
+
+def plot_constraints(
+    fig: Figure,
+    X: Polytope,
+):
+    for i, ax in enumerate(fig.axes):
+        ax.axline((-1, X.vertices[:,i].max()), slope=0, color='k', linewidth=2)
+        ax.axline((-1, X.vertices[:,i].min()), slope=0, color='k', linewidth=2)
+
 
 def plot_x_state_time(
         fig_number: int,
@@ -57,14 +68,14 @@ def plot_x_state_time(
         if i == 0:
             kwargs['label'] = label
         ax.plot(x[:,i], color=params.color, alpha=params.alpha, linewidth=params.linewidth, **kwargs)
-        if X is not None:
-            ax.axline((-1, X.vertices[:,i].max()), slope=0, color='k', linewidth=2)
-            ax.axline((-1, X.vertices[:,i].min()), slope=0, color='k', linewidth=2)
         if i == n - 1:
             ax.set_xlabel('time')
         ax.set_ylabel(axes_labels[i])
         ax.set_xlim([0, num_steps])
         ax.grid(visible=True)
+
+    if X is not None:
+        plot_constraints(fig, X)
 
     ax1 = axes[0]
     if title is not None:

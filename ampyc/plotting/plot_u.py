@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 from ampyc.typing import Params
 from ampyc.utils import Polytope
+from .plot_x import plot_constraints
 
 def plot_u(fig_number: int,
            u: np.ndarray,
@@ -49,8 +50,7 @@ def plot_u(fig_number: int,
 
     ax.plot(u, color=params.color, alpha=params.alpha, linewidth=params.linewidth, label=label)
     if U is not None:
-        ax.axline((-1, U.vertices.max()), slope=0, color='k', linewidth=2)
-        ax.axline((-1, U.vertices.min()), slope=0, color='k', linewidth=2)
+        plot_constraints(fig, U)
     ax.set_xlabel('time')
     ax.set_ylabel(axes_labels[0])
     ax.set_xlim([0, num_steps])
