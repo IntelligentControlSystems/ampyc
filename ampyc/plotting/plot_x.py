@@ -19,9 +19,12 @@ def plot_constraints(
     fig: Figure,
     X: Polytope,
 ):
+    mins, maxes = X.bounding_box
     for i, ax in enumerate(fig.axes):
-        ax.axline((-1, X.vertices[:,i].max()), slope=0, color='k', linewidth=2)
-        ax.axline((-1, X.vertices[:,i].min()), slope=0, color='k', linewidth=2)
+        if np.isfinite(mins[i, 0]):
+            ax.axline((-1, mins[i, 0]), slope=0, color='k', linewidth=2)
+        if np.isfinite(maxes[i, 0]):
+            ax.axline((-1, maxes[i, 0]), slope=0, color='k', linewidth=2)
 
 
 def plot_x_state_time(
