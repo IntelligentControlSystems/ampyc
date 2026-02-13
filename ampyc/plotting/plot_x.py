@@ -55,7 +55,7 @@ def plot_x_state_time(
 
     n = x.shape[1]
     if axes_labels is None:
-        axes_labels = [f'x_{i+1}' for i in range(n)]
+        axes_labels = [f'x_{{{i+1}}}' for i in range(n)]
 
     # check if the figure number is already open
     if plt.fignum_exists(fig_number):
